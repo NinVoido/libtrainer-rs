@@ -1,15 +1,14 @@
 mod file_utils;
-mod data;
-
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub mod record;
+pub mod task;
+mod error_types;
 
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
     use std::path::Path;
-    use crate::data::{DifferentKeyComp, load_csv_table, diff, Record};
+    use crate::record::{load_csv_table, diff, Record};
+    use crate::error_types::*;
 
     #[test]
     fn load_csv() {
