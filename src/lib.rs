@@ -2,6 +2,7 @@ mod file_utils;
 pub mod record;
 pub mod task;
 mod error_types;
+mod answer;
 
 #[cfg(test)]
 mod tests {

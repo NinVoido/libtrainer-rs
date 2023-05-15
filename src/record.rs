@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::error::Error;
 use std::fmt;
-use std::iter::zip;
 
 use serde::{Serialize, Deserialize};
 
@@ -14,6 +13,7 @@ pub struct Record {
 
     #[serde(flatten)]
     values: BTreeMap<String, String>,
+
 }
 
 impl fmt::Display for Record {
@@ -30,7 +30,7 @@ impl fmt::Display for Record {
 impl Record {
 
     pub fn new(key: String, values: BTreeMap<String, String>) -> Self {
-        return Record {
+        Record {
             key,
             values,
         }
@@ -73,6 +73,14 @@ impl Record {
         }
         true
     }
+
+    // pub fn strip(&mut self) {
+    //     for i in &mut self.values.keys() {
+    //         if self.values[i] == "".to_string() {
+    //             self.values.remove(i);
+    //         }
+    //     }
+    // }
 }
 
 
@@ -95,10 +103,12 @@ pub fn diff(a: &Record, b: &Record) -> Result<BTreeMap<String, (String, String)>
     }
 
     let mut res = BTreeMap::new();
-
-    for (a_val, b_val) in zip(a.values.iter(), b.values.iter()) {
-        if a_val.1 != b_val.1 && a_val.1 != ""{
-            res.insert(a_val.0.to_string(), (a_val.1.to_string(), b_val.1.to_string()));
+    dbg!(a, b);
+    for i in a.values.keys() {
+        if b.values.contains_key(i) {
+            if a.values[i].to_lowercase().trim() != b.values[i].to_lowercase().trim() {
+                res.insert(i.clone(), (a.values[i].clone(), b.values[i].clone()));
+            }
         }
     }
 
