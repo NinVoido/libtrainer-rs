@@ -5,8 +5,8 @@ use std::path::Path;
 
 use rand::seq::SliceRandom;
 
-use crate::record::{diff, load_csv_table, Record};
 use crate::error_types::*;
+use crate::record::{diff, load_csv_table, Record};
 
 #[derive(Default, Clone, Debug)]
 pub struct Tasks {
@@ -16,7 +16,6 @@ pub struct Tasks {
 }
 
 impl Tasks {
-
     pub fn from_csv(path: &Path) -> Result<Self, Box<dyn Error>> {
         let mut tsks = Tasks {
             tasks: load_csv_table(path)?,
@@ -39,18 +38,21 @@ impl Tasks {
     }
 
     pub fn get_task(&self, ind: usize) -> &Record {
-        return &self.tasks[ind]
+        return &self.tasks[ind];
     }
 
     pub fn len(&self) -> usize {
-        return self.tasks.len()
+        return self.tasks.len();
     }
 
-    pub fn check_answer(&self, b: &Record) -> Result<BTreeMap<String, (String, String)>, Box<dyn Error>> {
+    pub fn check_answer(
+        &self,
+        b: &Record,
+    ) -> Result<BTreeMap<String, Vec<(String, String)>>, Box<dyn Error>> {
         return if let Some(last_task) = &self.last_task {
-            Ok(diff(last_task, b)?)
+            Ok(diff(&last_task, &b)?)
         } else {
             Err(Box::try_from(EmptyAnswerStackCheck).unwrap())
-        }
+        };
     }
 }

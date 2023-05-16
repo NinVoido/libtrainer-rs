@@ -1,113 +1,119 @@
 use std::collections::BTreeMap;
-use std::path::Path;
 use std::error::Error;
 use std::fmt;
-
-use serde::{Serialize, Deserialize};
+use std::iter::zip;
+use std::path::Path;
 
 use crate::error_types::*;
+use crate::preloader::Preloader;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Record {
     key: String,
 
-    #[serde(flatten)]
-    values: BTreeMap<String, String>,
-
+    pub(crate) values: BTreeMap<String, Vec<String>>,
 }
 
 impl fmt::Display for Record {
-    // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Write strictly the first element into the supplied output
-        // stream: `f`. Returns `fmt::Result` which indicates whether the
-        // operation succeeded or failed. Note that `write!` uses syntax which
-        // is very similar to `println!`.
         write!(f, "{}", self.key)
     }
 }
 
-impl Record {
-
-    pub fn new(key: String, values: BTreeMap<String, String>) -> Self {
-        Record {
-            key,
-            values,
+impl From<Preloader> for Record {
+    fn from(pre: Preloader) -> Self {
+        let mut result = Record::new(pre.key, BTreeMap::new());
+        for (k, v) in pre.raw_data.iter() {
+            let mut splitted: Vec<String> = Vec::new();
+            for i in v.split("#") {
+                if i == "" {
+                    continue;
+                } else {
+                    splitted.push(i.to_string());
+                }
+            }
+            splitted.sort();
+            if splitted.len() != 0 {
+                result.values.insert(k.to_string(), splitted);
+            }
         }
+        result
+    }
+}
+impl Record {
+    pub fn new(key: String, values: BTreeMap<String, Vec<String>>) -> Self {
+        Record { key, values }
     }
 
     pub fn copy_format(a: Record) -> Self {
         let mut res = Record {
             key: a.key.clone(),
-            values: BTreeMap::new()
+            values: BTreeMap::new(),
         };
         for i in a.values.keys() {
-            if a.values.get(i) != Some(&"".to_string()) {
-                res.values.insert(i.clone(), "".to_string());
+            if a.values.get(i) != Some(&vec!["".to_string()]) {
+                // format should be same length as original
+                res.values.insert(i.clone(), vec!["".to_string()]);
             }
         }
         res
     }
 
     pub fn get_fields(self) -> Vec<String> {
-        let mut res = Vec::new();
-
-        for (k, v) in self.values {
-            if v != "" {
-                res.push(k);
-            }
-        }
-
-        res
+        self.values.keys().map(|s| s.clone()).collect()
     }
 
-    pub fn insert(&mut self, k: &String, v: String) {
+    pub fn field_len(self, k: &String) -> usize {
+        self.values[k].len()
+    }
+
+    pub fn replace(&mut self, k: &String, v: Vec<String>) {
         *self.values.get_mut(k).unwrap() = v;
     }
 
     pub fn is_full(&self) -> bool {
         for i in self.values.values() {
-            if i == "" {
-                return false
+            if i.len() == 0 {
+                return false;
             }
         }
         true
     }
-
-    // pub fn strip(&mut self) {
-    //     for i in &mut self.values.keys() {
-    //         if self.values[i] == "".to_string() {
-    //             self.values.remove(i);
-    //         }
-    //     }
-    // }
 }
 
-
-pub fn load_csv_table(path: &Path) -> Result<Vec<Record>, Box<dyn Error>>{
+pub fn load_csv_table(path: &Path) -> Result<Vec<Record>, Box<dyn Error>> {
     let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(path)?;
 
     let mut result: Vec<Record> = Vec::new();
 
-    for rec in rdr.deserialize() {
-        result.push(rec?);
+    for rec in rdr.deserialize::<Preloader>() {
+        result.push(Record::from(rec.unwrap()))
     }
 
     Ok(result)
 }
 
-pub fn diff(a: &Record, b: &Record) -> Result<BTreeMap<String, (String, String)>, DifferentKeyComp> {
-
+pub fn diff(
+    a: &Record,
+    b: &Record,
+) -> Result<BTreeMap<String, Vec<(String, String)>>, DifferentKeyComp> {
     if a.key != b.key {
         return Err(DifferentKeyComp);
     }
 
-    let mut res = BTreeMap::new();
+    let mut res: BTreeMap<String, Vec<(String, String)>> = BTreeMap::new();
+
     dbg!(a, b);
+
     for i in a.values.keys() {
-        if b.values.contains_key(i) {
-            if a.values[i].to_lowercase().trim() != b.values[i].to_lowercase().trim() {
-                res.insert(i.clone(), (a.values[i].clone(), b.values[i].clone()));
+        for (first, second) in zip(&a.values[i], &b.values[i]) {
+            if first.to_lowercase().trim() != second.to_lowercase().trim() {
+                if res.contains_key(i) {
+                    res.get_mut(i)
+                        .map(|val| val.push((first.clone(), second.clone())));
+                } else {
+                    res.insert(i.clone(), vec![(first.clone(), second.clone())]);
+                }
             }
         }
     }

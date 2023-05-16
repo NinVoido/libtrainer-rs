@@ -1,15 +1,16 @@
+mod answer;
+mod error_types;
 mod file_utils;
+mod preloader;
 pub mod record;
 pub mod task;
-mod error_types;
-mod answer;
 
 #[cfg(test)]
 mod tests {
+    use crate::error_types::*;
+    use crate::record::{diff, load_csv_table, Record};
     use std::collections::BTreeMap;
     use std::path::Path;
-    use crate::record::{load_csv_table, diff, Record};
-    use crate::error_types::*;
 
     #[test]
     fn load_csv() {
@@ -19,9 +20,9 @@ mod tests {
 
     #[test]
     fn diff_err() {
-        let a = Record::new("A".to_string(), BTreeMap::new());
-        let b = Record::new("B".to_string(), BTreeMap::new());
+        let mut a = Record::new("A".to_string(), BTreeMap::new());
+        let mut b = Record::new("B".to_string(), BTreeMap::new());
 
-        assert_eq!(diff(&a, &b), Err(DifferentKeyComp));
+        assert_eq!(diff(&mut a, &mut b), Err(DifferentKeyComp));
     }
 }
