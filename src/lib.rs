@@ -10,18 +10,18 @@ mod tests {
     use crate::error_types::*;
     use crate::record::{diff, load_csv_table, Record};
     use std::collections::BTreeMap;
-    use std::path::Path;
+    use std::fs::File;
 
     #[test]
     fn load_csv() {
-        let result = load_csv_table(Path::new("test1.csv")).unwrap();
-        dbg!(result);
+        let file = File::open("test1.csv").unwrap();
+        let result = load_csv_table(&file).unwrap();;
     }
 
     #[test]
     fn diff_err() {
-        let mut a = Record::new("A".to_string(), BTreeMap::new());
-        let mut b = Record::new("B".to_string(), BTreeMap::new());
+        let mut a = Record::new("A".to_string(), None, BTreeMap::new());
+        let mut b = Record::new("B".to_string(), None, BTreeMap::new());
 
         assert_eq!(diff(&mut a, &mut b), Err(DifferentKeyComp));
     }

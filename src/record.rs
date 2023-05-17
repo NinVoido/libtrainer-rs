@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt;
+use std::fs::File;
+use std::io::BufReader;
 use std::iter::zip;
-use std::path::Path;
 
 use crate::error_types::*;
 use crate::preloader::Preloader;
@@ -10,7 +11,7 @@ use crate::preloader::Preloader;
 #[derive(Debug, Clone)]
 pub struct Record {
     key: String,
-
+    comment: Option<String>,
     pub(crate) values: BTreeMap<String, Vec<String>>,
 }
 
@@ -22,7 +23,7 @@ impl fmt::Display for Record {
 
 impl From<Preloader> for Record {
     fn from(pre: Preloader) -> Self {
-        let mut result = Record::new(pre.key, BTreeMap::new());
+        let mut result = Record::new(pre.key, pre.comment, BTreeMap::new());
         for (k, v) in pre.raw_data.iter() {
             let mut splitted: Vec<String> = Vec::new();
             for i in v.split("#") {
@@ -41,13 +42,22 @@ impl From<Preloader> for Record {
     }
 }
 impl Record {
-    pub fn new(key: String, values: BTreeMap<String, Vec<String>>) -> Self {
-        Record { key, values }
+    pub fn new(
+        key: String,
+        comment: Option<String>,
+        values: BTreeMap<String, Vec<String>>,
+    ) -> Self {
+        Record {
+            key,
+            comment,
+            values,
+        }
     }
 
     pub fn copy_format(a: Record) -> Self {
         let mut res = Record {
             key: a.key.clone(),
+            comment: a.comment,
             values: BTreeMap::new(),
         };
         for i in a.values.keys() {
@@ -71,6 +81,9 @@ impl Record {
         *self.values.get_mut(k).unwrap() = v;
     }
 
+    pub fn comment(self) -> Option<String> {
+        self.comment
+    }
     pub fn is_full(&self) -> bool {
         for i in self.values.values() {
             if i.len() == 0 {
@@ -81,8 +94,10 @@ impl Record {
     }
 }
 
-pub fn load_csv_table(path: &Path) -> Result<Vec<Record>, Box<dyn Error>> {
-    let mut rdr = csv::ReaderBuilder::new().delimiter(b';').from_path(path)?;
+pub fn load_csv_table(file: &File) -> Result<Vec<Record>, Box<dyn Error>> {
+    let mut rdr = csv::ReaderBuilder::new()
+        .delimiter(b';')
+        .from_reader(BufReader::new(file));
 
     let mut result: Vec<Record> = Vec::new();
 
@@ -102,8 +117,6 @@ pub fn diff(
     }
 
     let mut res: BTreeMap<String, Vec<(String, String)>> = BTreeMap::new();
-
-    dbg!(a, b);
 
     for i in a.values.keys() {
         for (first, second) in zip(&a.values[i], &b.values[i]) {

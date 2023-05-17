@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::error::Error;
+use std::fs::File;
 use std::io::BufRead;
-use std::path::Path;
 
 use rand::seq::SliceRandom;
 
@@ -16,13 +16,12 @@ pub struct Tasks {
 }
 
 impl Tasks {
-    pub fn from_csv(path: &Path) -> Result<Self, Box<dyn Error>> {
+    pub fn from_csv(file: &File) -> Result<Self, Box<dyn Error>> {
         let mut tsks = Tasks {
-            tasks: load_csv_table(path)?,
+            tasks: load_csv_table(file)?,
             ..Default::default()
         };
 
-        let file = std::fs::File::open(path)?;
         let mut reader = std::io::BufReader::new(file);
         reader.read_line(&mut tsks.format)?;
 
