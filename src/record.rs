@@ -30,7 +30,7 @@ impl From<Preloader> for Record {
         let mut result = Record::new(pre.key, pre.comment, BTreeMap::new());
         for (k, v) in pre.raw_data.iter() {
             let mut splitted: Vec<String> = Vec::new();
-            for i in v.split("#") {
+            for i in v.to_string().split("#") {
                 if i == "" {
                     continue;
                 } else {

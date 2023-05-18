@@ -1,3 +1,5 @@
+extern crate core;
+
 mod answer;
 mod error_types;
 mod file_utils;
@@ -16,6 +18,7 @@ mod tests {
     fn load_csv() {
         let file = File::open("test1.csv").unwrap();
         let _result = load_csv_table(&file).unwrap();
+        dbg!(_result);
     }
 
     #[test]
