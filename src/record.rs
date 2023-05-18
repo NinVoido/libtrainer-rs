@@ -8,10 +8,14 @@ use std::iter::zip;
 use crate::error_types::*;
 use crate::preloader::Preloader;
 
+/// Abstraction over record in CSV file
 #[derive(Debug, Clone)]
 pub struct Record {
+    /// The unique value that all other values relates to
     key: String,
+    /// Optional field with comment about the key
     comment: Option<String>,
+    /// "property" - "answer" map
     pub(crate) values: BTreeMap<String, Vec<String>>,
 }
 
@@ -42,6 +46,7 @@ impl From<Preloader> for Record {
     }
 }
 impl Record {
+    /// Create new Record from field values
     pub fn new(
         key: String,
         comment: Option<String>,
@@ -54,6 +59,7 @@ impl Record {
         }
     }
 
+    /// Copy format of a Record, for example to make it an field for the answer
     pub fn copy_format(a: Record) -> Self {
         let mut res = Record {
             key: a.key.clone(),
@@ -69,21 +75,26 @@ impl Record {
         res
     }
 
+    /// Get all fields of a Record
     pub fn get_fields(self) -> Vec<String> {
         self.values.keys().map(|s| s.clone()).collect()
     }
 
+    /// Get number of fields in a Record
     pub fn field_len(self, k: &String) -> usize {
         self.values[k].len()
     }
 
+    /// Replace one answer with another
     pub fn replace(&mut self, k: &String, v: Vec<String>) {
         *self.values.get_mut(k).unwrap() = v;
     }
 
+    /// Get a comment of a Record if exists
     pub fn comment(self) -> Option<String> {
         self.comment
     }
+    /// Check if Record contains any empty answers
     pub fn is_full(&self) -> bool {
         for i in self.values.values() {
             if i.len() == 0 {
@@ -94,6 +105,7 @@ impl Record {
     }
 }
 
+/// Load a CSV table into vector of Records
 pub fn load_csv_table(file: &File) -> Result<Vec<Record>, Box<dyn Error>> {
     let mut rdr = csv::ReaderBuilder::new()
         .delimiter(b';')
@@ -108,6 +120,7 @@ pub fn load_csv_table(file: &File) -> Result<Vec<Record>, Box<dyn Error>> {
     Ok(result)
 }
 
+/// Get differences of two Records in "field" - ("answer1" - "answer2") format
 pub fn diff(
     a: &Record,
     b: &Record,
