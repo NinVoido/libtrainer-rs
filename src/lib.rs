@@ -15,7 +15,7 @@ mod tests {
     #[test]
     fn load_csv() {
         let file = File::open("test1.csv").unwrap();
-        let result = load_csv_table(&file).unwrap();;
+        let _result = load_csv_table(&file).unwrap();
     }
 
     #[test]

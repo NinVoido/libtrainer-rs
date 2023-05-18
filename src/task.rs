@@ -40,8 +40,20 @@ impl Tasks {
         return &self.tasks[ind];
     }
 
+    pub fn cur_task(&self) -> Result<&Record, Box<dyn Error>> {
+        return if let Some(task) = &self.last_task {
+            Ok(task)
+        } else {
+            Err(Box::try_from(EmptyAnswerStackCheck).unwrap())
+        };
+    }
+
     pub fn len(&self) -> usize {
         return self.tasks.len();
+    }
+
+    pub fn format(&self) -> &String {
+        &self.format
     }
 
     pub fn check_answer(

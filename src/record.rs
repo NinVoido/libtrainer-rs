@@ -102,7 +102,7 @@ pub fn load_csv_table(file: &File) -> Result<Vec<Record>, Box<dyn Error>> {
     let mut result: Vec<Record> = Vec::new();
 
     for rec in rdr.deserialize::<Preloader>() {
-        result.push(Record::from(rec.unwrap()))
+        result.push(Record::from(rec?))
     }
 
     Ok(result)
