@@ -5,6 +5,8 @@ use std::collections::BTreeMap;
 #[serde(untagged)]
 pub(crate) enum Value {
 
+    Float(f64),
+
     Number(i64),
 
     String(String),
@@ -14,6 +16,7 @@ pub(crate) enum Value {
 impl ToString for Value {
     fn to_string(&self) -> String {
         match self.clone() {
+            Value::Float(f) => f.to_string(),
             Value::Number(n) => n.to_string(),
             Value::String(s) => s.clone(),
         }
